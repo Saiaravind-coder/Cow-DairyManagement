@@ -1,0 +1,266 @@
+<div class="p-4" style="background-color: #F5F5F0; min-height: 100vh;">
+
+  <!-- Header -->
+  <div class="mb-6 px-2 py-4 rounded-xl"
+    style="background-color: #6FA83E;">
+    <h2 class="text-2xl font-bold text-white px-2">Dashboard</h2>
+    <p class="text-sm mt-1 px-2" style="color: rgba(255,255,255,0.8);">
+      Welcome back! Here's your farm overview.
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-12" style="color: #6FA83E;">
+    Loading dashboard...
+  </div>
+
+  <div *ngIf="!loading">
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+
+      <div (click)="navigate('/dashboard/cows')"
+        class="relative rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+          <span style="font-size: 80px;">🐄</span>
+        </div>
+        <div class="relative p-4">
+          <p class="text-sm font-medium" style="color: #6FA83E;">Total Cows</p>
+          <p class="text-3xl font-bold mt-1" style="color: #212121;">{{ totalCows }}</p>
+          <p class="text-xs mt-1" style="color: #6FA83E;">{{ activeCows }} active</p>
+        </div>
+      </div>
+
+      <div (click)="navigate('/dashboard/milk')"
+        class="relative rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+          <span style="font-size: 80px;">🥛</span>
+        </div>
+        <div class="relative p-4">
+          <p class="text-sm font-medium" style="color: #6FA83E;">Total Milk</p>
+          <p class="text-3xl font-bold mt-1" style="color: #212121;">
+            {{ totalMilkLiters | number:'1.1-1' }} L
+          </p>
+          <p class="text-xs mt-1" style="color: #6FA83E;">All time</p>
+        </div>
+      </div>
+
+      <div (click)="navigate('/dashboard/milk')"
+        class="relative rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+          <span style="font-size: 80px;">💰</span>
+        </div>
+        <div class="relative p-4">
+          <p class="text-sm font-medium" style="color: #6FA83E;">Total Revenue</p>
+          <p class="text-3xl font-bold mt-1" style="color: #212121;">
+            ₹{{ totalRevenue | number:'1.0-0' }}
+          </p>
+          <p class="text-xs mt-1" style="color: #6FA83E;">From milk sales</p>
+        </div>
+      </div>
+
+      <div (click)="navigate('/dashboard/health')"
+        class="relative rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+          <span style="font-size: 80px;">💊</span>
+        </div>
+        <div class="relative p-4">
+          <p class="text-sm font-medium" style="color: #6FA83E;">Medical Cost</p>
+          <p class="text-3xl font-bold mt-1" style="color: #212121;">
+            ₹{{ totalMedicalCost | number:'1.0-0' }}
+          </p>
+          <p class="text-xs mt-1" style="color: #6FA83E;">All time</p>
+        </div>
+      </div>
+
+      <div (click)="navigate('/dashboard/inventory')"
+        class="relative rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+          <span style="font-size: 80px;">📦</span>
+        </div>
+        <div class="relative p-4">
+          <p class="text-sm font-medium" style="color: #6FA83E;">Inventory Items</p>
+          <p class="text-3xl font-bold mt-1" style="color: #212121;">
+            {{ inventoryItems.length }}
+          </p>
+          <p class="text-xs mt-1" style="color: #6FA83E;">{{ lowStockItems }} low stock</p>
+        </div>
+      </div>
+
+      <div (click)="navigate('/dashboard/health')"
+        class="relative rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+          <span style="font-size: 80px;">🏥</span>
+        </div>
+        <div class="relative p-4">
+          <p class="text-sm font-medium" style="color: #6FA83E;">Health Records</p>
+          <p class="text-3xl font-bold mt-1" style="color: #212121;">
+            {{ healthRecords.length }}
+          </p>
+          <p class="text-xs mt-1" style="color: #6FA83E;">Total checkups</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+      <!-- Breed Chart -->
+      <div class="rounded-xl shadow-sm overflow-hidden"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="px-4 pt-4 pb-2"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold" style="color: #212121;">
+              🐄 Cow Breed Distribution
+            </h3>
+            <div class="flex gap-1">
+              <button (click)="cowFilter='day'; onFilterChange('cow')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="cowFilter==='day' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="cowFilter==='day' ? 'white' : '#6FA83E'">Day</button>
+              <button (click)="cowFilter='month'; onFilterChange('cow')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="cowFilter==='month' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="cowFilter==='month' ? 'white' : '#6FA83E'">Month</button>
+              <button (click)="cowFilter='year'; onFilterChange('cow')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="cowFilter==='year' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="cowFilter==='year' ? 'white' : '#6FA83E'">Year</button>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div *ngIf="cows.length === 0" class="text-center py-8 text-sm"
+            style="color: #6FA83E;">No cows added yet</div>
+          <div class="flex justify-center">
+            <canvas *ngIf="cows.length > 0" #breedChart
+              style="max-height: 200px; max-width: 300px;"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Milk Chart -->
+      <div class="rounded-xl shadow-sm overflow-hidden"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="px-4 pt-4 pb-2"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold" style="color: #212121;">
+              🥛 Milk Production
+            </h3>
+            <div class="flex gap-1">
+              <button (click)="milkFilter='day'; onFilterChange('milk')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="milkFilter==='day' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="milkFilter==='day' ? 'white' : '#6FA83E'">Day</button>
+              <button (click)="milkFilter='month'; onFilterChange('milk')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="milkFilter==='month' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="milkFilter==='month' ? 'white' : '#6FA83E'">Month</button>
+              <button (click)="milkFilter='year'; onFilterChange('milk')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="milkFilter==='year' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="milkFilter==='year' ? 'white' : '#6FA83E'">Year</button>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div *ngIf="milkLogs.length === 0" class="text-center py-8 text-sm"
+            style="color: #6FA83E;">No milk logs yet</div>
+          <canvas *ngIf="milkLogs.length > 0" #milkChart
+            style="max-height: 180px;"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+      <!-- Health Chart -->
+      <div class="rounded-xl shadow-sm overflow-hidden"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="px-4 pt-4 pb-2"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold" style="color: #212121;">
+              🏥 Health — Disease Breakdown
+            </h3>
+            <div class="flex gap-1">
+              <button (click)="healthFilter='day'; onFilterChange('health')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="healthFilter==='day' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="healthFilter==='day' ? 'white' : '#6FA83E'">Day</button>
+              <button (click)="healthFilter='month'; onFilterChange('health')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="healthFilter==='month' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="healthFilter==='month' ? 'white' : '#6FA83E'">Month</button>
+              <button (click)="healthFilter='year'; onFilterChange('health')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="healthFilter==='year' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="healthFilter==='year' ? 'white' : '#6FA83E'">Year</button>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div *ngIf="healthRecords.length === 0" class="text-center py-8 text-sm"
+            style="color: #6FA83E;">No health records yet</div>
+          <canvas *ngIf="healthRecords.length > 0" #healthChart
+            style="max-height: 180px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Inventory Chart -->
+      <div class="rounded-xl shadow-sm overflow-hidden"
+        style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+        <div class="px-4 pt-4 pb-2"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold" style="color: #212121;">
+              📦 Inventory Stock Levels
+            </h3>
+            <div class="flex gap-1">
+              <button (click)="inventoryFilter='day'; onFilterChange('inventory')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="inventoryFilter==='day' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="inventoryFilter==='day' ? 'white' : '#6FA83E'">Day</button>
+              <button (click)="inventoryFilter='month'; onFilterChange('inventory')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="inventoryFilter==='month' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="inventoryFilter==='month' ? 'white' : '#6FA83E'">Month</button>
+              <button (click)="inventoryFilter='year'; onFilterChange('inventory')"
+                class="px-2 py-0.5 text-xs rounded-full transition-all"
+                [style.backgroundColor]="inventoryFilter==='year' ? '#6FA83E' : '#F5F5F0'"
+                [style.color]="inventoryFilter==='year' ? 'white' : '#6FA83E'">Year</button>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div *ngIf="inventoryItems.length === 0" class="text-center py-8 text-sm"
+            style="color: #6FA83E;">No inventory items yet</div>
+          <canvas *ngIf="inventoryItems.length > 0" #inventoryChart
+            style="max-height: 180px;"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="py-4 text-center rounded-xl"
+      style="background-color: #6FA83E;">
+      <p class="text-sm text-white">🐄 DairyFlow Pro — Farm Management System</p>
+      <p class="text-xs mt-1" style="color: rgba(255,255,255,0.7);">
+        Manage your dairy farm efficiently
+      </p>
+    </div>
+
+  </div>
+</div>

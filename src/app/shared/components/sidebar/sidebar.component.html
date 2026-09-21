@@ -1,0 +1,111 @@
+<div class="h-screen w-64 flex flex-col fixed left-0 top-0 z-20"
+  style="background-color: #6FA83E;">
+
+  <!-- Logo -->
+  <div class="px-6 py-5" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+        style="background-color: rgba(255,255,255,0.2);">
+        🐄
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white">DairyFlow Pro</h1>
+        <p class="text-xs" style="color: rgba(255,255,255,0.7);">Farm Management</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Farm Name -->
+  <div class="px-6 py-3" style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+    <p class="text-xs uppercase tracking-wide" style="color: rgba(255,255,255,0.6);">Farm</p>
+    <p class="text-sm font-medium text-white mt-0.5">{{ farmName }}</p>
+  </div>
+
+  <!-- Nav Links -->
+  <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+
+    <a routerLink="/dashboard/home"
+      routerLinkActive="active-nav"
+      [routerLinkActiveOptions]="{exact: true}"
+      class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white transition-all">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <a routerLink="/dashboard/cows"
+      routerLinkActive="active-nav"
+      class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white transition-all">
+      <span class="text-base flex-shrink-0">🐄</span>
+      Cows
+    </a>
+
+    <a routerLink="/dashboard/milk"
+      routerLinkActive="active-nav"
+      class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white transition-all">
+      <span class="text-base flex-shrink-0">🥛</span>
+      Milk Production
+    </a>
+
+    <a routerLink="/dashboard/health"
+      routerLinkActive="active-nav"
+      class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white transition-all">
+      <span class="text-base flex-shrink-0">🏥</span>
+      Health Records
+    </a>
+
+    <a routerLink="/dashboard/inventory"
+      routerLinkActive="active-nav"
+      class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white transition-all">
+      <span class="text-base flex-shrink-0">📦</span>
+      Inventory
+    </a>
+
+  </nav>
+
+  <!-- Dark Mode Toggle -->
+  <div class="px-4 py-3" style="border-top: 1px solid rgba(255,255,255,0.15);">
+    <div class="flex items-center justify-between px-3 py-2">
+      <span class="text-xs" style="color: rgba(255,255,255,0.7);">Dark Mode</span>
+      <button (click)="toggleTheme()"
+        class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none"
+        [style.backgroundColor]="isDark ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)'">
+        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full shadow transition-transform duration-300 flex items-center justify-center text-xs"
+          style="background-color: white;"
+          [style.transform]="isDark ? 'translateX(20px)' : 'translateX(0)'">
+          {{ isDark ? '🌙' : '☀️' }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Logout -->
+  <div class="px-4 py-4" style="border-top: 1px solid rgba(255,255,255,0.15);">
+    <button (click)="logout()"
+      class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
+      style="color: white; background-color: rgba(255,255,255,0.15);"
+      onmouseover="this.style.backgroundColor='rgba(255,255,255,0.25)'"
+      onmouseout="this.style.backgroundColor='rgba(255,255,255,0.15)'">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+      </svg>
+      Logout
+    </button>
+  </div>
+
+</div>
+
+<style>
+  .nav-item:hover {
+    background-color: rgba(255,255,255,0.2);
+  }
+  .active-nav {
+    background-color: rgba(255,255,255,0.25) !important;
+    font-weight: 600;
+  }
+</style>

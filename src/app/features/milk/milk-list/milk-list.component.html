@@ -1,0 +1,468 @@
+<div class="p-4" style="background-color: #F5F5F0; min-height: 100vh;">
+
+  <!-- Header -->
+  <div class="mb-6 px-2 py-4 rounded-xl" style="background-color: #6FA83E;">
+    <div class="flex items-center justify-between px-2">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Milk Production</h2>
+        <p class="text-sm mt-1" style="color: rgba(255,255,255,0.8);">Track daily milk logs</p>
+      </div>
+      <button (click)="openAdd()"
+        class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
+        style="background-color: rgba(255,255,255,0.25);">
+        + Log Milk
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">🥛</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Total Liters</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">
+          {{ filteredTotalLiters | number:'1.1-2' }} L
+        </p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Current page logs</p>
+      </div>
+    </div>
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">💰</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Total Revenue</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">
+          ₹{{ filteredTotalRevenue | number:'1.0-0' }}
+        </p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Current page logs</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="rounded-xl p-4 mb-4"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: #6FA83E;">
+      Filter Options
+    </p>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Cow Name</label>
+        <input [(ngModel)]="tableSearch"
+          (ngModelChange)="onTableSearch()"
+          type="text" placeholder="e.g. Lakshmi"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Shift</label>
+        <select [(ngModel)]="searchShift"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="">All Shifts</option>
+          <option value="AM">AM (Morning)</option>
+          <option value="PM">PM (Evening)</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">From Date</label>
+        <input [(ngModel)]="searchFromDate" type="date"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">To Date</label>
+        <input [(ngModel)]="searchToDate" type="date"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-3 mt-4">
+      <button (click)="applyFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
+        [style.backgroundColor]="filtersApplied ? '#4a7a2a' : '#6FA83E'">
+        {{ filtersApplied ? '✓ Applied' : 'Apply Filters' }}
+      </button>
+      <button (click)="resetFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium transition-all"
+        [style.backgroundColor]="filtersApplied ? 'rgba(239,68,68,0.08)' : '#F5F5F0'"
+        [style.color]="filtersApplied ? '#ef4444' : '#6FA83E'"
+        [style.border]="filtersApplied ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(111,168,62,0.4)'">
+        Reset
+      </button>
+    </div>
+    <p class="text-xs text-center mt-2" style="color: #6FA83E;">
+      {{ totalCount }} total logs
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-12" style="color: #6FA83E;">
+    Loading milk logs...
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && milkLogs.length === 0"
+    class="text-center py-12 rounded-xl"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-4xl mb-3">🥛</p>
+    <p style="color: #212121;">
+      {{ totalCount === 0 ? 'No milk logs yet.' : 'No logs match your filters.' }}
+    </p>
+    <button *ngIf="totalCount === 0" (click)="openAdd()"
+      class="mt-4 text-white px-4 py-2 rounded-lg text-sm hover:opacity-90"
+      style="background-color: #6FA83E;">
+      Log first entry
+    </button>
+    <button *ngIf="totalCount > 0" (click)="resetFilters()"
+      class="mt-4 px-4 py-2 rounded-lg text-sm"
+      style="border: 1px solid #6FA83E; color: #6FA83E;">
+      Reset Filters
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && milkLogs.length > 0"
+    class="rounded-xl overflow-hidden shadow-sm"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+
+    <!-- Table Search Bar -->
+    <div class="px-4 py-2.5 flex items-center justify-between gap-3"
+      style="background-color: #6FA83E;">
+      <p class="text-xs font-medium text-white">
+        {{ totalCount }} result{{ totalCount !== 1 ? 's' : '' }}
+      </p>
+      <div class="relative w-72">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2"
+          style="color: #6FA83E;"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <input [(ngModel)]="tableSearch"
+          (ngModelChange)="onTableSearch()"
+          type="text" placeholder="Search cow, shift, date..."
+          class="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg focus:outline-none"
+          style="border: none; background-color: #F5F5F0; color: #212121;"/>
+        <button *ngIf="tableSearch" (click)="clearTableSearch()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 hover:opacity-70"
+          style="color: #6FA83E;">✕</button>
+      </div>
+    </div>
+
+    <table class="w-full text-sm">
+      <thead style="background-color: #F5F5F0;">
+        <tr style="border-bottom: 2px solid rgba(111,168,62,0.3);">
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Date</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Cow</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Shift</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Quantity (L)</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Fat %</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Price/L</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Revenue</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of milkLogs; let i = index"
+          (click)="openDetail(log)"
+          class="cursor-pointer transition-all"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);"
+          [style.backgroundColor]="hoveredRow === i ? 'rgba(111,168,62,0.08)' : 'white'"
+          (mouseenter)="hoveredRow = i"
+          (mouseleave)="hoveredRow = null">
+          <td class="px-4 py-3 text-sm" style="color: #555;">{{ log.logDate }}</td>
+          <td class="px-4 py-3 text-sm font-medium" style="color: #212121;">
+            {{ getCowName(log.cowId) }}
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium"
+              [style.backgroundColor]="log.shift === 'AM'
+                ? 'rgba(234,179,8,0.12)' : 'rgba(59,130,246,0.12)'"
+              [style.color]="log.shift === 'AM' ? '#ca8a04' : '#3b82f6'">
+              {{ log.shift }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-sm font-medium" style="color: #212121;">{{ log.quantity }} L</td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">{{ log.qualityDegree ?? '-' }}</td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">
+            {{ log.pricePerLiter ? '₹' + log.pricePerLiter : '-' }}
+          </td>
+          <td class="px-4 py-3 text-sm font-medium" style="color: #6FA83E;">
+            {{ log.pricePerLiter ? '₹' + (log.quantity * log.pricePerLiter | number:'1.0-0') : '-' }}
+          </td>
+          <td class="px-4 py-3">
+            <button (click)="openEdit(log, $event)"
+              class="text-xs font-medium mr-3 hover:opacity-70"
+              style="color: #6FA83E;">Edit</button>
+            <button (click)="delete(log.id, $event)"
+              class="text-xs font-medium hover:opacity-70"
+              style="color: #ef4444;">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1"
+      class="flex items-center justify-between px-4 py-3"
+      style="background-color: #F5F5F0; border-top: 1px solid rgba(111,168,62,0.3);">
+      <p class="text-xs" style="color: #6FA83E;">
+        Page {{ currentPage }} of {{ totalPages }}
+        &nbsp;·&nbsp;
+        Showing {{ getShowingFrom() }}–{{ getShowingTo() }} of {{ totalCount }}
+      </p>
+      <div class="flex items-center gap-1">
+        <button (click)="onPageChange(1)" [disabled]="currentPage === 1"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">«</button>
+        <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">Prev</button>
+        <ng-container *ngFor="let p of getPageNumbers()">
+          <button (click)="onPageChange(p)"
+            class="px-3 py-1 text-xs rounded font-medium"
+            [style.backgroundColor]="p === currentPage ? '#6FA83E' : 'white'"
+            [style.color]="p === currentPage ? 'white' : '#6FA83E'"
+            style="border: 1px solid #6FA83E;">{{ p }}</button>
+        </ng-container>
+        <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">Next</button>
+        <button (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">»</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detail Popup -->
+  <div *ngIf="showDetail && detailLog"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
+    (click)="showDetail = false">
+    <div class="rounded-2xl shadow-2xl w-full max-w-md"
+      style="background-color: white;"
+      (click)="$event.stopPropagation()">
+
+      <div class="px-6 py-4 flex items-center justify-between rounded-t-2xl"
+        style="background-color: #6FA83E;">
+        <div>
+          <h3 class="text-lg font-bold text-white">{{ getCowName(detailLog.cowId) }}</h3>
+          <p style="color: rgba(255,255,255,0.8);" class="text-xs">{{ detailLog.logDate }}</p>
+        </div>
+        <button (click)="showDetail = false"
+          class="text-white hover:opacity-70 text-2xl">✕</button>
+      </div>
+
+      <div class="p-6">
+        <div class="flex justify-center mb-4">
+          <span class="px-4 py-1.5 rounded-full text-sm font-medium"
+            [style.backgroundColor]="detailLog.shift === 'AM'
+              ? 'rgba(234,179,8,0.12)' : 'rgba(59,130,246,0.12)'"
+            [style.color]="detailLog.shift === 'AM' ? '#ca8a04' : '#3b82f6'">
+            {{ detailLog.shift === 'AM' ? '🌅 Morning (AM)' : '🌙 Evening (PM)' }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(111,168,62,0.1); border: 1px solid rgba(111,168,62,0.3);">
+            <p class="text-xs mb-1" style="color: #6FA83E;">Quantity</p>
+            <p class="text-2xl font-bold" style="color: #6FA83E;">{{ detailLog.quantity }} L</p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.2);">
+            <p class="text-xs mb-1" style="color: #ca8a04;">Revenue</p>
+            <p class="text-2xl font-bold" style="color: #ca8a04;">
+              {{ detailLog.pricePerLiter
+                ? '₹' + (detailLog.quantity * detailLog.pricePerLiter | number:'1.0-0')
+                : '-' }}
+            </p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2);">
+            <p class="text-xs mb-1" style="color: #3b82f6;">Fat %</p>
+            <p class="text-2xl font-bold" style="color: #3b82f6;">{{ detailLog.qualityDegree ?? '-' }}</p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: #F5F5F0; border: 1px solid rgba(111,168,62,0.2);">
+            <p class="text-xs mb-1" style="color: #6FA83E;">Price / Liter</p>
+            <p class="text-2xl font-bold" style="color: #212121;">
+              {{ detailLog.pricePerLiter ? '₹' + detailLog.pricePerLiter : '-' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-xl p-4 mb-5" style="background-color: #F5F5F0;">
+          <p class="text-xs mb-2 font-medium" style="color: #6FA83E;">Cow Details</p>
+          <div>
+            <p class="text-sm font-bold" style="color: #212121;">{{ getCowName(detailLog.cowId) }}</p>
+            <p class="text-xs mt-1" style="color: #555;">
+              {{ getCow(detailLog.cowId)?.breed || 'Unknown breed' }} ·
+              {{ getCow(detailLog.cowId)?.tagId || 'No tag' }}
+            </p>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="px-2 py-0.5 rounded-full text-xs"
+                [style.backgroundColor]="getCow(detailLog.cowId)?.status === 'Active'
+                  ? 'rgba(111,168,62,0.15)' : 'rgba(150,150,150,0.1)'"
+                [style.color]="getCow(detailLog.cowId)?.status === 'Active' ? '#6FA83E' : '#888'">
+                {{ getCow(detailLog.cowId)?.status }}
+              </span>
+              <span class="px-2 py-0.5 rounded-full text-xs"
+                style="background-color: rgba(236,72,153,0.12); color: #ec4899;">
+                {{ getCow(detailLog.cowId)?.gender || 'Female' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button (click)="openEdit(detailLog, $event); showDetail = false"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #6FA83E;">Edit</button>
+          <button (click)="delete(detailLog.id); showDetail = false"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #ef4444;">Delete</button>
+          <button (click)="showDetail = false"
+            class="flex-1 py-2 rounded-lg text-sm hover:opacity-80"
+            style="border: 1px solid rgba(111,168,62,0.4); color: #6FA83E;">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Form -->
+  <div *ngIf="showForm"
+    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
+    <div class="rounded-2xl shadow-xl w-full max-w-md p-6"
+      style="background-color: white;">
+
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+            style="background-color: rgba(111,168,62,0.15);">🥛</div>
+          <h3 class="text-lg font-bold" style="color: #212121;">
+            {{ selectedLog ? 'Edit Milk Log' : 'Log Milk Production' }}
+          </h3>
+        </div>
+        <button (click)="showForm = false; resetForm()"
+          class="hover:opacity-70 text-xl" style="color: #888;">✕</button>
+      </div>
+
+      <div *ngIf="error"
+        class="text-sm rounded-lg px-4 py-3 mb-4"
+        style="background-color: rgba(239,68,68,0.08);
+               border: 1px solid rgba(239,68,68,0.3);
+               color: #ef4444;">
+        {{ error }}
+      </div>
+
+      <div class="rounded-lg px-4 py-2 mb-4"
+        style="background-color: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2);">
+        <p class="text-xs" style="color: #3b82f6;">
+          🐄 Only female cows are shown — male cows cannot produce milk.
+        </p>
+      </div>
+
+      <form (ngSubmit)="onSubmit()">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">
+              Cow * <span class="text-xs" style="color: #ec4899;">(Female only)</span>
+            </label>
+            <select [(ngModel)]="form.cowId" name="cowId"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;">
+              <option [ngValue]="null">Select cow</option>
+              <option *ngFor="let c of femaleCows" [ngValue]="c.id">
+                🐄 {{ c.name }} {{ c.tagId ? '(' + c.tagId + ')' : '' }}
+              </option>
+            </select>
+            <p *ngIf="femaleCows.length === 0" class="text-xs mt-1" style="color: #ef4444;">
+              No female cows found.
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Date</label>
+            <input [(ngModel)]="form.logDate" name="logDate" type="date"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Shift</label>
+            <select [(ngModel)]="form.shift" name="shift"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;">
+              <option value="AM">AM (Morning)</option>
+              <option value="PM">PM (Evening)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Quantity (L) *</label>
+            <input [(ngModel)]="form.quantity" name="quantity" type="number"
+              step="0.1" min="0" placeholder="e.g. 12.5"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Fat % (optional)</label>
+            <input [(ngModel)]="form.qualityDegree" name="qualityDegree" type="number"
+              step="0.1" min="0" max="10" placeholder="e.g. 4.5"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Price/Liter (optional)</label>
+            <input [(ngModel)]="form.pricePerLiter" name="pricePerLiter" type="number"
+              step="0.5" min="0" placeholder="e.g. 45"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button type="button" (click)="showForm = false; resetForm()"
+            class="flex-1 py-2 rounded-lg text-sm hover:opacity-80"
+            style="border: 1px solid rgba(111,168,62,0.4); color: #6FA83E;">Cancel</button>
+          <button type="submit"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #6FA83E;">
+            {{ selectedLog ? 'Update Log' : 'Save Log' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

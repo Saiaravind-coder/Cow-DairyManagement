@@ -1,0 +1,437 @@
+<div class="p-4" style="background-color: #F5F5F0; min-height: 100vh;">
+
+  <!-- Header -->
+  <div class="mb-6 px-2 py-4 rounded-xl" style="background-color: #6FA83E;">
+    <div class="flex items-center justify-between px-2">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Inventory</h2>
+        <p class="text-sm mt-1" style="color: rgba(255,255,255,0.8);">Click any row to view details</p>
+      </div>
+      <button (click)="openAdd()"
+        class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
+        style="background-color: rgba(255,255,255,0.25);">
+        + Add Item
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">📦</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Total Stock Value</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">
+          ₹{{ filteredTotalValue | number:'1.0-0' }}
+        </p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">All filtered items</p>
+      </div>
+    </div>
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">⚠️</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Low Stock Items</p>
+        <p class="text-3xl font-bold mt-1"
+          [style.color]="filteredLowStockCount > 0 ? '#ef4444' : '#212121'">
+          {{ filteredLowStockCount }}
+        </p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Below 10 kg</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="rounded-xl p-4 mb-4"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: #6FA83E;">
+      Filter Options
+    </p>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Item Name</label>
+        <input [(ngModel)]="searchItem" type="text" placeholder="e.g. Green Grass"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Stock Status</label>
+        <select [(ngModel)]="searchStock"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="">All</option>
+          <option value="low">Low Stock (below 10)</option>
+          <option value="medium">Medium (10–50)</option>
+          <option value="good">Good (above 50)</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-3 mt-4">
+      <button (click)="applyFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
+        [style.backgroundColor]="filtersApplied ? '#4a7a2a' : '#6FA83E'">
+        {{ filtersApplied ? '✓ Applied' : 'Apply Filters' }}
+      </button>
+      <button (click)="resetFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium transition-all"
+        [style.backgroundColor]="filtersApplied ? 'rgba(239,68,68,0.08)' : '#F5F5F0'"
+        [style.color]="filtersApplied ? '#ef4444' : '#6FA83E'"
+        [style.border]="filtersApplied
+          ? '1px solid rgba(239,68,68,0.3)'
+          : '1px solid rgba(111,168,62,0.4)'">
+        Reset
+      </button>
+    </div>
+    <p class="text-xs text-center mt-2" style="color: #6FA83E;">
+      {{ filteredItems.length }} of {{ items.length }} items
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-12" style="color: #6FA83E;">
+    Loading inventory...
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && filteredItems.length === 0"
+    class="text-center py-12 rounded-xl"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-4xl mb-3">📦</p>
+    <p style="color: #212121;">
+      {{ items.length === 0 ? 'No inventory items yet.' : 'No items match your filters.' }}
+    </p>
+    <button *ngIf="items.length === 0" (click)="openAdd()"
+      class="mt-4 text-white px-4 py-2 rounded-lg text-sm hover:opacity-90"
+      style="background-color: #6FA83E;">Add first item</button>
+    <button *ngIf="items.length > 0" (click)="resetFilters()"
+      class="mt-4 px-4 py-2 rounded-lg text-sm"
+      style="border: 1px solid #6FA83E; color: #6FA83E;">Reset Filters</button>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && filteredItems.length > 0"
+    class="rounded-xl overflow-hidden shadow-sm"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+
+    <!-- Table Search Bar -->
+    <div class="px-4 py-2.5 flex items-center justify-between gap-3"
+      style="background-color: #6FA83E;">
+      <p class="text-xs font-medium text-white">
+        {{ tableFilteredItems.length }} result{{ tableFilteredItems.length !== 1 ? 's' : '' }}
+      </p>
+      <div class="relative w-72">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2"
+          style="color: #6FA83E;"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <input [(ngModel)]="tableSearch" type="text"
+          placeholder="Search item, quantity, cost..."
+          class="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg focus:outline-none"
+          style="border: none; background-color: #F5F5F0; color: #212121;"/>
+        <button *ngIf="tableSearch" (click)="tableSearch = ''"
+          class="absolute right-2 top-1/2 -translate-y-1/2 hover:opacity-70"
+          style="color: #6FA83E;">✕</button>
+      </div>
+    </div>
+
+    <!-- Empty table search -->
+    <div *ngIf="tableFilteredItems.length === 0" class="text-center py-8">
+      <p class="text-sm" style="color: #555;">
+        No results for "<span class="font-medium">{{ tableSearch }}</span>"
+      </p>
+      <button (click)="tableSearch = ''" class="mt-2 text-xs hover:underline"
+        style="color: #6FA83E;">Clear search</button>
+    </div>
+
+    <table *ngIf="tableFilteredItems.length > 0" class="w-full text-sm">
+      <thead style="background-color: #F5F5F0;">
+        <tr style="border-bottom: 2px solid rgba(111,168,62,0.3);">
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Item Name</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Quantity (kg)</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Unit Cost (₹)</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Total Value</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Stock Status</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Last Updated</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of tableFilteredItems"
+          (click)="openDetail(item)"
+          class="cursor-pointer transition-all"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);"
+          onmouseover="this.style.backgroundColor='rgba(111,168,62,0.06)'"
+          onmouseout="this.style.backgroundColor='white'">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">{{ getItemEmoji(item.itemName) }}</span>
+              <span class="text-sm font-medium" style="color: #212121;">{{ item.itemName }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">{{ item.quantityRemaining }} kg</td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">₹{{ item.unitCost }}</td>
+          <td class="px-4 py-3 text-sm font-medium" style="color: #6FA83E;">
+            ₹{{ item.quantityRemaining * item.unitCost | number:'1.0-0' }}
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium"
+              [class]="getStockClass(item.quantityRemaining)">
+              {{ getStockStatus(item.quantityRemaining) }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-xs" style="color: #555;">
+            {{ item.lastUpdated | date:'dd MMM yyyy' }}
+          </td>
+          <td class="px-4 py-3">
+            <button (click)="openEdit(item, $event)"
+              class="text-xs font-medium mr-3 hover:opacity-70"
+              style="color: #6FA83E;">Edit</button>
+            <button (click)="delete(item.id, $event)"
+              class="text-xs font-medium hover:opacity-70"
+              style="color: #ef4444;">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1"
+      class="flex items-center justify-between px-4 py-3"
+      style="background-color: #F5F5F0; border-top: 1px solid rgba(111,168,62,0.3);">
+      <p class="text-xs" style="color: #6FA83E;">
+        Page {{ currentPage }} of {{ totalPages }}
+        &nbsp;·&nbsp;
+        {{ filteredItems.length }} total items
+      </p>
+      <div class="flex items-center gap-1">
+        <button (click)="onPageChange(1)" [disabled]="currentPage === 1"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">«</button>
+        <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">Prev</button>
+        <ng-container *ngFor="let p of getPageNumbers()">
+          <button (click)="onPageChange(p)"
+            class="px-3 py-1 text-xs rounded font-medium"
+            [style.backgroundColor]="p === currentPage ? '#6FA83E' : 'white'"
+            [style.color]="p === currentPage ? 'white' : '#6FA83E'"
+            style="border: 1px solid #6FA83E;">{{ p }}</button>
+        </ng-container>
+        <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">Next</button>
+        <button (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">»</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detail Popup -->
+  <div *ngIf="showDetail && detailItem"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
+    (click)="showDetail = false">
+    <div class="rounded-2xl shadow-2xl w-full max-w-md"
+      style="background-color: white;"
+      (click)="$event.stopPropagation()">
+
+      <div class="px-6 py-4 flex items-center justify-between rounded-t-2xl"
+        style="background-color: #6FA83E;">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+            style="background-color: rgba(255,255,255,0.25);">
+            {{ getItemEmoji(detailItem.itemName) }}
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">{{ detailItem.itemName }}</h3>
+            <p style="color: rgba(255,255,255,0.8);" class="text-xs">
+              Last updated: {{ detailItem.lastUpdated | date:'dd MMM yyyy' }}
+            </p>
+          </div>
+        </div>
+        <button (click)="showDetail = false"
+          class="text-white hover:opacity-70 text-2xl">✕</button>
+      </div>
+
+      <div class="p-6">
+
+        <div class="flex justify-center mb-5">
+          <span class="text-sm px-4 py-1.5 rounded-full font-medium"
+            [class]="getStockClass(detailItem.quantityRemaining)">
+            {{ getStockStatus(detailItem.quantityRemaining) }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="rounded-xl p-4 text-center"
+            [style.backgroundColor]="detailItem.quantityRemaining < 10
+              ? 'rgba(239,68,68,0.08)'
+              : detailItem.quantityRemaining < 50
+              ? 'rgba(234,179,8,0.08)'
+              : 'rgba(111,168,62,0.1)'"
+            [style.border]="detailItem.quantityRemaining < 10
+              ? '1px solid rgba(239,68,68,0.2)'
+              : detailItem.quantityRemaining < 50
+              ? '1px solid rgba(234,179,8,0.2)'
+              : '1px solid rgba(111,168,62,0.3)'">
+            <p class="text-xs mb-1"
+              [style.color]="detailItem.quantityRemaining < 10
+                ? '#ef4444'
+                : detailItem.quantityRemaining < 50
+                ? '#ca8a04'
+                : '#6FA83E'">Quantity Remaining</p>
+            <p class="text-2xl font-bold"
+              [style.color]="detailItem.quantityRemaining < 10
+                ? '#ef4444'
+                : detailItem.quantityRemaining < 50
+                ? '#ca8a04'
+                : '#6FA83E'">
+              {{ detailItem.quantityRemaining }} kg
+            </p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(111,168,62,0.1);
+                   border: 1px solid rgba(111,168,62,0.3);">
+            <p class="text-xs mb-1" style="color: #6FA83E;">Total Value</p>
+            <p class="text-2xl font-bold" style="color: #6FA83E;">
+              ₹{{ detailItem.quantityRemaining * detailItem.unitCost | number:'1.0-0' }}
+            </p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(59,130,246,0.08);
+                   border: 1px solid rgba(59,130,246,0.2);">
+            <p class="text-xs mb-1" style="color: #3b82f6;">Unit Cost</p>
+            <p class="text-2xl font-bold" style="color: #3b82f6;">₹{{ detailItem.unitCost }} / kg</p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: #F5F5F0;
+                   border: 1px solid rgba(111,168,62,0.2);">
+            <p class="text-xs mb-1" style="color: #6FA83E;">Last Updated</p>
+            <p class="text-sm font-bold" style="color: #212121;">
+              {{ detailItem.lastUpdated | date:'dd MMM yyyy' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-5">
+          <div class="flex justify-between text-xs mb-1" style="color: #888;">
+            <span>Stock Level</span>
+            <span>{{ detailItem.quantityRemaining }} kg</span>
+          </div>
+          <div class="w-full rounded-full h-3" style="background-color: #F5F5F0;">
+            <div class="h-3 rounded-full transition-all"
+              [style.width.%]="Math.min((detailItem.quantityRemaining / 100) * 100, 100)"
+              [style.backgroundColor]="detailItem.quantityRemaining < 10
+                ? '#ef4444'
+                : detailItem.quantityRemaining < 50
+                ? '#f59e0b'
+                : '#6FA83E'">
+            </div>
+          </div>
+          <div class="flex justify-between text-xs mt-1" style="color: #888;">
+            <span>0</span>
+            <span>50</span>
+            <span>100+ kg</span>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button (click)="openEdit(detailItem); showDetail = false"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #6FA83E;">Edit</button>
+          <button (click)="delete(detailItem.id); showDetail = false"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #ef4444;">Delete</button>
+          <button (click)="showDetail = false"
+            class="flex-1 py-2 rounded-lg text-sm hover:opacity-80"
+            style="border: 1px solid rgba(111,168,62,0.4); color: #6FA83E;">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Form -->
+  <div *ngIf="showForm"
+    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
+    <div class="rounded-2xl shadow-xl w-full max-w-md p-6"
+      style="background-color: white;">
+
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-bold" style="color: #212121;">
+          {{ selectedItem ? 'Edit Item' : 'Add Inventory Item' }}
+        </h3>
+        <button (click)="showForm = false"
+          class="hover:opacity-70 text-xl" style="color: #888;">✕</button>
+      </div>
+
+      <div *ngIf="error"
+        class="text-sm rounded-lg px-4 py-3 mb-4"
+        style="background-color: rgba(239,68,68,0.08);
+               border: 1px solid rgba(239,68,68,0.3);
+               color: #ef4444;">
+        {{ error }}
+      </div>
+
+      <form (ngSubmit)="onSubmit()">
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Item Name *</label>
+          <select [(ngModel)]="form.itemName" name="itemName"
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;">
+            <option value="">Select item</option>
+            <option *ngFor="let f of feedItems" [value]="f">
+              {{ getItemEmoji(f) }} {{ f }}
+            </option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Quantity (kg) *</label>
+            <input [(ngModel)]="form.quantityRemaining" name="quantityRemaining"
+              type="number" min="0" step="0.5" placeholder="e.g. 100"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Unit Cost (₹/kg) *</label>
+            <input [(ngModel)]="form.unitCost" name="unitCost"
+              type="number" min="0" step="0.5" placeholder="e.g. 25"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button type="button" (click)="showForm = false"
+            class="flex-1 py-2 rounded-lg text-sm hover:opacity-80"
+            style="border: 1px solid rgba(111,168,62,0.4); color: #6FA83E;">Cancel</button>
+          <button type="submit"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #6FA83E;">
+            {{ selectedItem ? 'Update Item' : 'Add Item' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

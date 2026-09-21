@@ -1,1 +1,30 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  color: #111827;
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html {
+  background: transparent;
+}
+
+html.dark body {
+  color: #f9fafb;
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}

@@ -1,0 +1,513 @@
+<div class="p-4" style="background-color: #F5F5F0; min-height: 100vh;">
+
+  <!-- Header -->
+  <div class="mb-6 px-2 py-4 rounded-xl" style="background-color: #6FA83E;">
+    <div class="flex items-center justify-between px-2">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Health Records</h2>
+        <p class="text-sm mt-1" style="color: rgba(255,255,255,0.8);">
+          Click any row to view details
+        </p>
+      </div>
+      <button (click)="showForm = true; resetForm()"
+        class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
+        style="background-color: rgba(255,255,255,0.25);">
+        + Add Record
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">🤰</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Pregnant Cows</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">
+          {{ filteredPregnantCows }}
+        </p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Current page</p>
+      </div>
+    </div>
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">💊</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Total Medical Cost</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">
+          ₹{{ filteredMedicalCost | number:'1.0-0' }}
+        </p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Current page</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="rounded-xl p-4 mb-4"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: #6FA83E;">
+      Filter Options
+    </p>
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Cow Name</label>
+        <input [(ngModel)]="tableSearch"
+          (ngModelChange)="onTableSearch()"
+          type="text" placeholder="e.g. Lakshmi"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Disease</label>
+        <select [(ngModel)]="searchDisease"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="">All Diseases</option>
+          <option *ngFor="let d of diseases" [value]="d.en">
+            {{ d.en }} — {{ d.ta }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Pregnancy</label>
+        <select [(ngModel)]="searchPregnancy"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="">All</option>
+          <option value="yes">Pregnant</option>
+          <option value="no">Not Pregnant</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex justify-center gap-4 mb-3">
+      <div class="w-48">
+        <label class="block text-xs mb-1" style="color: #6FA83E;">From Date</label>
+        <input [(ngModel)]="searchFromDate" type="date"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+      </div>
+      <div class="w-48">
+        <label class="block text-xs mb-1" style="color: #6FA83E;">To Date</label>
+        <input [(ngModel)]="searchToDate" type="date"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-3 mt-4">
+      <button (click)="applyFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
+        [style.backgroundColor]="filtersApplied ? '#4a7a2a' : '#6FA83E'">
+        {{ filtersApplied ? '✓ Applied' : 'Apply Filters' }}
+      </button>
+      <button (click)="resetFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium transition-all"
+        [style.backgroundColor]="filtersApplied ? 'rgba(239,68,68,0.08)' : '#F5F5F0'"
+        [style.color]="filtersApplied ? '#ef4444' : '#6FA83E'"
+        [style.border]="filtersApplied
+          ? '1px solid rgba(239,68,68,0.3)'
+          : '1px solid rgba(111,168,62,0.4)'">
+        Reset
+      </button>
+    </div>
+    <p class="text-xs text-center mt-2" style="color: #6FA83E;">
+      {{ totalCount }} total records
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-12" style="color: #6FA83E;">
+    Loading health records...
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && records.length === 0"
+    class="text-center py-12 rounded-xl"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-4xl mb-3">🏥</p>
+    <p style="color: #212121;">
+      {{ totalCount === 0 ? 'No health records yet.' : 'No records match your filters.' }}
+    </p>
+    <button *ngIf="totalCount === 0" (click)="showForm = true"
+      class="mt-4 text-white px-4 py-2 rounded-lg text-sm hover:opacity-90"
+      style="background-color: #6FA83E;">Add first record</button>
+    <button *ngIf="totalCount > 0" (click)="resetFilters()"
+      class="mt-4 px-4 py-2 rounded-lg text-sm"
+      style="border: 1px solid #6FA83E; color: #6FA83E;">Reset Filters</button>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && records.length > 0"
+    class="rounded-xl overflow-hidden shadow-sm"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+
+    <!-- Table Search Bar -->
+    <div class="px-4 py-2.5 flex items-center justify-between gap-3"
+      style="background-color: #6FA83E;">
+      <p class="text-xs font-medium text-white">
+        {{ totalCount }} result{{ totalCount !== 1 ? 's' : '' }}
+      </p>
+      <div class="relative w-72">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2"
+          style="color: #6FA83E;"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <input [(ngModel)]="tableSearch"
+          (ngModelChange)="onTableSearch()"
+          type="text"
+          placeholder="Search cow, disease, date..."
+          class="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg focus:outline-none"
+          style="border: none; background-color: #F5F5F0; color: #212121;"/>
+        <button *ngIf="tableSearch" (click)="tableSearch = ''; onTableSearch()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 hover:opacity-70"
+          style="color: #6FA83E;">✕</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <table class="w-full text-sm">
+      <thead style="background-color: #F5F5F0;">
+        <tr style="border-bottom: 2px solid rgba(111,168,62,0.3);">
+          <th class="text-left px-4 py-3 text-xs font-semibold"
+            style="color: #6FA83E;">Date</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold"
+            style="color: #6FA83E;">Cow</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold"
+            style="color: #6FA83E;">Pregnancy</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold"
+            style="color: #6FA83E;">Disease</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold"
+            style="color: #6FA83E;">Medication</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold"
+            style="color: #6FA83E;">Cost</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold"
+            style="color: #6FA83E;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of records"
+          (click)="openDetail(r)"
+          class="cursor-pointer transition-all"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);"
+          onmouseover="this.style.backgroundColor='rgba(111,168,62,0.06)'"
+          onmouseout="this.style.backgroundColor='white'">
+          <td class="px-4 py-3 text-sm" style="color: #555;">{{ r.checkupDate }}</td>
+          <td class="px-4 py-3 text-sm font-medium" style="color: #212121;">
+            {{ getCowName(r.cowId) }}
+          </td>
+          <td class="px-4 py-3">
+            <span *ngIf="r.pregnancyMonth"
+              class="px-2 py-1 rounded-full text-xs font-medium"
+              style="background-color: rgba(236,72,153,0.12); color: #ec4899;">
+              Month {{ r.pregnancyMonth }}
+            </span>
+            <span *ngIf="!r.pregnancyMonth" class="text-sm" style="color: #888;">-</span>
+          </td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">
+            {{ r.diseaseName || '-' }}
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs"
+              [style.backgroundColor]="r.medicationGiven
+                ? 'rgba(111,168,62,0.15)' : 'rgba(150,150,150,0.1)'"
+              [style.color]="r.medicationGiven ? '#6FA83E' : '#888'">
+              {{ r.medicationGiven ? 'Yes' : 'No' }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-sm font-medium" style="color: #ef4444;">
+            {{ r.medicalCost ? '₹' + r.medicalCost : '-' }}
+          </td>
+          <td class="px-4 py-3">
+            <button (click)="delete(r.id, $event)"
+              class="text-xs font-medium hover:opacity-70"
+              style="color: #ef4444;">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1"
+      class="flex items-center justify-between px-4 py-3"
+      style="background-color: #F5F5F0; border-top: 1px solid rgba(111,168,62,0.3);">
+      <p class="text-xs" style="color: #6FA83E;">
+        Page {{ currentPage }} of {{ totalPages }}
+        &nbsp;·&nbsp;
+        Showing {{ getShowingFrom() }}–{{ getShowingTo() }} of {{ totalCount }}
+      </p>
+      <div class="flex items-center gap-1">
+        <button (click)="onPageChange(1)" [disabled]="currentPage === 1"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">
+          «
+        </button>
+        <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">
+          Prev
+        </button>
+        <ng-container *ngFor="let p of getPageNumbers()">
+          <button (click)="onPageChange(p)"
+            class="px-3 py-1 text-xs rounded font-medium"
+            [style.backgroundColor]="p === currentPage ? '#6FA83E' : 'white'"
+            [style.color]="p === currentPage ? 'white' : '#6FA83E'"
+            style="border: 1px solid #6FA83E;">
+            {{ p }}
+          </button>
+        </ng-container>
+        <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">
+          Next
+        </button>
+        <button (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">
+          »
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detail Popup -->
+  <div *ngIf="showDetail && detailRecord"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
+    (click)="showDetail = false">
+    <div class="rounded-2xl shadow-2xl w-full max-w-md"
+      style="background-color: white;"
+      (click)="$event.stopPropagation()">
+
+      <div class="px-6 py-4 flex items-center justify-between rounded-t-2xl"
+        style="background-color: #6FA83E;">
+        <div>
+          <h3 class="text-lg font-bold text-white">
+            {{ getCowName(detailRecord.cowId) }}
+          </h3>
+          <p style="color: rgba(255,255,255,0.8);" class="text-xs">
+            {{ detailRecord.checkupDate }}
+          </p>
+        </div>
+        <button (click)="showDetail = false"
+          class="text-white hover:opacity-70 text-2xl">✕</button>
+      </div>
+
+      <div class="p-6">
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(236,72,153,0.08);
+                   border: 1px solid rgba(236,72,153,0.2);">
+            <p class="text-xs mb-1" style="color: #ec4899;">Pregnancy</p>
+            <p class="text-xl font-bold" style="color: #ec4899;">
+              {{ detailRecord.pregnancyMonth
+                ? 'Month ' + detailRecord.pregnancyMonth
+                : 'Not Pregnant' }}
+            </p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(239,68,68,0.08);
+                   border: 1px solid rgba(239,68,68,0.2);">
+            <p class="text-xs mb-1" style="color: #ef4444;">Medical Cost</p>
+            <p class="text-xl font-bold" style="color: #ef4444;">
+              {{ detailRecord.medicalCost ? '₹' + detailRecord.medicalCost : '-' }}
+            </p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(234,179,8,0.08);
+                   border: 1px solid rgba(234,179,8,0.2);">
+            <p class="text-xs mb-1" style="color: #ca8a04;">Disease</p>
+            <p class="text-sm font-bold" style="color: #ca8a04;">
+              {{ detailRecord.diseaseName || 'Routine Checkup' }}
+            </p>
+            <p *ngIf="detailRecord.diseaseName"
+              class="text-xs mt-0.5" style="color: #ca8a04; opacity: 0.7;">
+              {{ getDiseaseTamil(detailRecord.diseaseName) }}
+            </p>
+          </div>
+          <div class="rounded-xl p-4 text-center"
+            style="background-color: rgba(111,168,62,0.1);
+                   border: 1px solid rgba(111,168,62,0.3);">
+            <p class="text-xs mb-1" style="color: #6FA83E;">Medication</p>
+            <span class="text-xl font-bold"
+              [style.color]="detailRecord.medicationGiven ? '#6FA83E' : '#888'">
+              {{ detailRecord.medicationGiven ? '✓ Given' : '✗ Not Given' }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="detailRecord.notes"
+          class="rounded-xl p-4 mb-5" style="background-color: #F5F5F0;">
+          <p class="text-xs mb-1 font-medium" style="color: #6FA83E;">Notes</p>
+          <p class="text-sm" style="color: #212121;">{{ detailRecord.notes }}</p>
+        </div>
+
+        <div class="rounded-xl p-4 mb-5" style="background-color: #F5F5F0;">
+          <p class="text-xs mb-2 font-medium" style="color: #6FA83E;">Cow Details</p>
+          <div>
+            <p class="text-sm font-bold" style="color: #212121;">
+              {{ getCowName(detailRecord.cowId) }}
+            </p>
+            <p class="text-xs mt-1" style="color: #555;">
+              {{ getCow(detailRecord.cowId)?.breed || 'Unknown breed' }} ·
+              {{ getCow(detailRecord.cowId)?.tagId || 'No tag' }}
+            </p>
+            <span class="inline-block mt-2 px-2 py-0.5 rounded-full text-xs"
+              [style.backgroundColor]="getCow(detailRecord.cowId)?.status === 'Active'
+                ? 'rgba(111,168,62,0.15)' : 'rgba(150,150,150,0.1)'"
+              [style.color]="getCow(detailRecord.cowId)?.status === 'Active'
+                ? '#6FA83E' : '#888'">
+              {{ getCow(detailRecord.cowId)?.status }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button (click)="delete(detailRecord.id); showDetail = false"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #ef4444;">Delete</button>
+          <button (click)="showDetail = false"
+            class="flex-1 py-2 rounded-lg text-sm hover:opacity-80"
+            style="border: 1px solid rgba(111,168,62,0.4); color: #6FA83E;">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Form -->
+  <div *ngIf="showForm"
+    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
+    <div class="rounded-2xl shadow-xl w-full max-w-lg p-6"
+      style="background-color: white;">
+
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-bold" style="color: #212121;">Add Health Record</h3>
+        <button (click)="showForm = false"
+          class="hover:opacity-70 text-xl" style="color: #888;">✕</button>
+      </div>
+
+      <div *ngIf="error"
+        class="text-sm rounded-lg px-4 py-3 mb-4"
+        style="background-color: rgba(239,68,68,0.08);
+               border: 1px solid rgba(239,68,68,0.3);
+               color: #ef4444;">
+        {{ error }}
+      </div>
+
+      <form (ngSubmit)="onSubmit()">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">Cow *</label>
+            <select [(ngModel)]="form.cowId" name="cowId"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;">
+              <option [ngValue]="null">Select cow</option>
+              <option *ngFor="let c of cows" [ngValue]="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">
+              Checkup Date
+            </label>
+            <input [(ngModel)]="form.checkupDate" name="checkupDate" type="date"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">
+              Pregnancy Month
+            </label>
+            <select [(ngModel)]="form.pregnancyMonth" name="pregnancyMonth"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;">
+              <option [ngValue]="null">Not Pregnant</option>
+              <option *ngFor="let m of [1,2,3,4,5,6,7,8,9]" [ngValue]="m">
+                Month {{ m }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">
+              Disease Name
+            </label>
+            <select [(ngModel)]="form.diseaseName" name="diseaseName"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;">
+              <option value="">None / Routine Checkup</option>
+              <option *ngFor="let d of diseases" [value]="d.en">
+                {{ d.en }} — {{ d.ta }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color: #212121;">
+              Medical Cost (₹)
+            </label>
+            <input [(ngModel)]="form.medicalCost" name="medicalCost" type="number"
+              min="0" placeholder="e.g. 500"
+              class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+              style="border: 1px solid rgba(111,168,62,0.4);
+                     background-color: #F5F5F0;
+                     color: #212121;"/>
+          </div>
+          <div class="flex items-center mt-6">
+            <label class="flex items-center gap-2 text-sm cursor-pointer"
+              style="color: #212121;">
+              <input type="checkbox"
+                [(ngModel)]="form.medicationGiven" name="medicationGiven"
+                class="w-4 h-4" style="accent-color: #6FA83E;"/>
+              Medication Given
+            </label>
+          </div>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Notes</label>
+          <textarea [(ngModel)]="form.notes" name="notes" rows="2"
+            placeholder="Any additional notes..."
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;">
+          </textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="button" (click)="showForm = false"
+            class="flex-1 py-2 rounded-lg text-sm hover:opacity-80"
+            style="border: 1px solid rgba(111,168,62,0.4); color: #6FA83E;">Cancel</button>
+          <button type="submit"
+            class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            style="background-color: #6FA83E;">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

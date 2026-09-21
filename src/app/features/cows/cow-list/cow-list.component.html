@@ -1,0 +1,616 @@
+<div class="p-4" style="background-color: #F5F5F0; min-height: 100vh;">
+
+  <!-- Header -->
+  <div class="mb-6 px-2 py-4 rounded-xl" style="background-color: #6FA83E;">
+    <div class="flex items-center justify-between px-2">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Cows</h2>
+        <p class="text-sm mt-1" style="color: rgba(255,255,255,0.8);">Click any row to view details</p>
+      </div>
+      <button (click)="openAdd()"
+        class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
+        style="background-color: rgba(255,255,255,0.25);">
+        + Add Cow
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">🐄</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Total Cows</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">{{ totalCount }}</p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">All cows</p>
+      </div>
+    </div>
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">✅</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">Active Cows</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">{{ activeCount }}</p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Currently active</p>
+      </div>
+    </div>
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">🔖</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">With Loan</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">{{ loanCount }}</p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Has loan</p>
+      </div>
+    </div>
+    <div class="relative rounded-xl overflow-hidden shadow-sm"
+      style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+      <div class="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+        <span style="font-size: 80px;">🛡️</span>
+      </div>
+      <div class="relative p-4">
+        <p class="text-sm font-medium" style="color: #6FA83E;">With Insurance</p>
+        <p class="text-3xl font-bold mt-1" style="color: #212121;">{{ insuranceCount }}</p>
+        <p class="text-xs mt-1" style="color: #6FA83E;">Has insurance</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="rounded-xl p-4 mb-4"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: #6FA83E;">
+      Filter Options
+    </p>
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Status</label>
+        <select [(ngModel)]="searchStatus"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Sold">Sold</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Breed</label>
+        <select [(ngModel)]="searchBreed"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="">All Breeds</option>
+          <option *ngFor="let b of uniqueBreeds" [value]="b">{{ b }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" style="color: #6FA83E;">Page Size</label>
+        <select [(ngModel)]="pageSize" (ngModelChange)="currentPage = 1; loadCows()"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option [ngValue]="5">5 per page</option>
+          <option [ngValue]="10">10 per page</option>
+          <option [ngValue]="20">20 per page</option>
+          <option [ngValue]="50">50 per page</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-3 mt-4">
+      <button (click)="applyFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
+        [style.backgroundColor]="filtersApplied ? '#4a7a2a' : '#6FA83E'">
+        {{ filtersApplied ? '✓ Applied' : 'Apply Filters' }}
+      </button>
+      <button (click)="resetFilters()"
+        class="px-6 py-2 rounded-lg text-sm font-medium transition-all"
+        [style.backgroundColor]="filtersApplied ? 'rgba(239,68,68,0.08)' : '#F5F5F0'"
+        [style.color]="filtersApplied ? '#ef4444' : '#6FA83E'"
+        [style.border]="filtersApplied ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(111,168,62,0.4)'">
+        Reset
+      </button>
+    </div>
+    <p class="text-xs text-center mt-2" style="color: #6FA83E;">
+      {{ totalCount }} total cows
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-12" style="color: #6FA83E;">
+    Loading cows...
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && cows.length === 0"
+    class="text-center py-12 rounded-xl"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+    <p class="text-4xl mb-3">🐄</p>
+    <p style="color: #212121;">
+      {{ totalCount === 0 ? 'No cows added yet.' : 'No cows match your filters.' }}
+    </p>
+    <button *ngIf="totalCount === 0" (click)="openAdd()"
+      class="mt-4 text-white px-4 py-2 rounded-lg text-sm hover:opacity-90"
+      style="background-color: #6FA83E;">
+      Add your first cow
+    </button>
+    <button *ngIf="totalCount > 0" (click)="resetFilters()"
+      class="mt-4 px-4 py-2 rounded-lg text-sm"
+      style="border: 1px solid #6FA83E; color: #6FA83E; background-color: transparent;">
+      Reset Filters
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && cows.length > 0"
+    class="rounded-xl overflow-hidden shadow-sm"
+    style="background-color: white; border: 1px solid rgba(111,168,62,0.3);">
+
+    <!-- Table Search Bar -->
+    <div class="px-4 py-2.5 flex items-center justify-between gap-3"
+      style="background-color: #6FA83E;">
+      <p class="text-xs font-medium text-white">
+        {{ totalCount }} result{{ totalCount !== 1 ? 's' : '' }}
+      </p>
+      <div class="relative w-72">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2"
+          style="color: #6FA83E;"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <input [(ngModel)]="tableSearch"
+          (ngModelChange)="onTableSearch()"
+          type="text"
+          placeholder="Search name, tag, breed, gender..."
+          class="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg focus:outline-none"
+          style="border: none;
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+        <button *ngIf="tableSearch" (click)="clearTableSearch()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 hover:opacity-70"
+          style="color: #6FA83E;">✕</button>
+      </div>
+    </div>
+
+    <table class="w-full text-sm">
+      <thead style="background-color: #F5F5F0;">
+        <tr style="border-bottom: 2px solid rgba(111,168,62,0.3);">
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Name</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Tag ID</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Breed</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Gender</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Mother</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Status</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Loan</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Insurance</th>
+          <th class="text-left px-4 py-3 text-xs font-semibold" style="color: #6FA83E;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cow of cows; let i = index"
+          (click)="openDetail(cow)"
+          class="cursor-pointer transition-all"
+          style="border-bottom: 1px solid rgba(111,168,62,0.15);"
+          [style.backgroundColor]="hoveredRow === i ? 'rgba(111,168,62,0.08)' : 'white'"
+          (mouseenter)="hoveredRow = i"
+          (mouseleave)="hoveredRow = null">
+          <td class="px-4 py-3 text-sm font-medium" style="color: #212121;">
+            {{ cow.name || '-' }}
+          </td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">{{ cow.tagId || '-' }}</td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">{{ cow.breed || '-' }}</td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+              [style.backgroundColor]="cow.gender === 'Male'
+                ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)'"
+              [style.color]="cow.gender === 'Male' ? '#3b82f6' : '#ec4899'">
+              {{ cow.gender || 'Female' }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-sm" style="color: #555;">
+            {{ getParentName(cow.parentId) }}
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium"
+              [style.backgroundColor]="cow.status === 'Active'
+                ? 'rgba(111,168,62,0.15)' : 'rgba(150,150,150,0.12)'"
+              [style.color]="cow.status === 'Active' ? '#6FA83E' : '#888'">
+              {{ cow.status }}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs"
+              [style.backgroundColor]="cow.hasLoan
+                ? 'rgba(239,68,68,0.12)' : 'rgba(150,150,150,0.1)'"
+              [style.color]="cow.hasLoan ? '#ef4444' : '#888'">
+              {{ cow.hasLoan ? 'Yes' : 'No' }}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs"
+              [style.backgroundColor]="cow.hasInsurance
+                ? 'rgba(59,130,246,0.12)' : 'rgba(150,150,150,0.1)'"
+              [style.color]="cow.hasInsurance ? '#3b82f6' : '#888'">
+              {{ cow.hasInsurance ? 'Yes' : 'No' }}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <button (click)="openEdit(cow, $event)"
+              class="text-xs font-medium mr-3 hover:opacity-70"
+              style="color: #6FA83E;">Edit</button>
+            <button (click)="deleteCow(cow.id, $event)"
+              class="text-xs font-medium hover:opacity-70"
+              style="color: #ef4444;">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1"
+      class="flex items-center justify-between px-4 py-3"
+      style="background-color: #F5F5F0; border-top: 1px solid rgba(111,168,62,0.3);">
+      <p class="text-xs" style="color: #6FA83E;">
+        Page {{ currentPage }} of {{ totalPages }}
+        &nbsp;·&nbsp;
+        Showing {{ getShowingFrom() }}–{{ getShowingTo() }} of {{ totalCount }}
+      </p>
+      <div class="flex items-center gap-1">
+        <button (click)="onPageChange(1)" [disabled]="currentPage === 1"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30 transition-all"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">«</button>
+        <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30 transition-all"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">Prev</button>
+        <ng-container *ngFor="let p of getPageNumbers()">
+          <button (click)="onPageChange(p)"
+            class="px-3 py-1 text-xs rounded font-medium transition-all"
+            [style.backgroundColor]="p === currentPage ? '#6FA83E' : 'white'"
+            [style.color]="p === currentPage ? 'white' : '#6FA83E'"
+            style="border: 1px solid #6FA83E;">{{ p }}</button>
+        </ng-container>
+        <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages"
+          class="px-3 py-1 text-xs rounded disabled:opacity-30 transition-all"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">Next</button>
+        <button (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages"
+          class="px-2 py-1 text-xs rounded disabled:opacity-30 transition-all"
+          style="border: 1px solid #6FA83E; color: #6FA83E; background-color: white;">»</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detail Popup -->
+  <div *ngIf="showDetail && detailCow"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
+    (click)="showDetail = false">
+    <div class="rounded-2xl shadow-2xl w-full max-w-4xl max-h-screen overflow-y-auto"
+      style="background-color: white;"
+      (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="sticky top-0 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10"
+        style="background-color: #6FA83E;">
+        <div>
+          <h3 class="text-lg font-bold text-white">{{ detailCow.name || 'Unnamed Cow' }}</h3>
+          <p style="color: rgba(255,255,255,0.8);" class="text-xs">{{ detailCow.tagId || 'No Tag' }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-3 py-1 rounded-full text-xs font-medium"
+            [style.backgroundColor]="detailCow.status === 'Active'
+              ? 'rgba(255,255,255,0.25)' : 'rgba(239,68,68,0.3)'"
+            style="color: white;">
+            {{ detailCow.status }}
+          </span>
+          <button (click)="showDetail = false"
+            class="text-white hover:opacity-70 text-2xl font-bold">✕</button>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <div *ngIf="detailLoading" class="text-center py-8" style="color: #6FA83E;">
+          Loading details...
+        </div>
+
+        <div *ngIf="!detailLoading">
+
+          <!-- Image + Details -->
+          <div class="flex flex-col lg:flex-row gap-6 mb-6">
+            <div class="flex flex-col items-center gap-2">
+              <div *ngIf="detailCow.imageUrl"
+                class="w-40 h-40 rounded-xl overflow-hidden shadow"
+                style="border: 2px solid #6FA83E;">
+                <img [src]="detailCow.imageUrl" alt="Cow" class="w-full h-full object-cover"/>
+              </div>
+              <div class="flex gap-2 mt-2">
+                <button (click)="openEdit(detailCow, $event); showDetail = false"
+                  class="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90"
+                  style="background-color: #6FA83E;">Edit</button>
+                <button (click)="deleteCow(detailCow.id, $event); showDetail = false"
+                  class="text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90"
+                  style="background-color: #ef4444;">Delete</button>
+              </div>
+            </div>
+
+            <div class="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-3">
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Date of Birth</p>
+                <p class="text-sm font-medium mt-1" style="color: #212121;">
+                  {{ detailCow.dateOfBirth ? (detailCow.dateOfBirth | date:'MMM dd, yyyy') : '-' }}
+                </p>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Age</p>
+                <p class="text-sm font-medium mt-1" style="color: #212121;">
+                  {{ getAge(detailCow.dateOfBirth) }}
+                </p>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Gender</p>
+                <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                  [style.backgroundColor]="detailCow.gender === 'Male'
+                    ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)'"
+                  [style.color]="detailCow.gender === 'Male' ? '#3b82f6' : '#ec4899'">
+                  {{ detailCow.gender || 'Female' }}
+                </span>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Breed</p>
+                <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                  style="background-color: rgba(111,168,62,0.15); color: #6FA83E;">
+                  {{ detailCow.breed || '-' }}
+                </span>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Mother Cow</p>
+                <p class="text-sm font-medium mt-1" style="color: #212121;">
+                  {{ getParentName(detailCow.parentId) }}
+                </p>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Last Health</p>
+                <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs"
+                  style="background-color: rgba(234,179,8,0.12); color: #ca8a04;">
+                  {{ getLastHealthStatus() }}
+                </span>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Weight</p>
+                <p class="text-sm font-medium mt-1" style="color: #212121;">
+                  {{ detailCow.weight ? detailCow.weight + ' kg' : '-' }}
+                </p>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Height</p>
+                <p class="text-sm font-medium mt-1" style="color: #212121;">
+                  {{ detailCow.height ? detailCow.height + ' inch' : '-' }}
+                </p>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Added On</p>
+                <p class="text-sm font-medium mt-1" style="color: #212121;">
+                  {{ detailCow.createdDate | date:'dd MMM yyyy' }}
+                </p>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Has Loan</p>
+                <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs"
+                  [style.backgroundColor]="detailCow.hasLoan
+                    ? 'rgba(239,68,68,0.12)' : 'rgba(150,150,150,0.1)'"
+                  [style.color]="detailCow.hasLoan ? '#ef4444' : '#888'">
+                  {{ detailCow.hasLoan ? 'Yes' : 'No' }}
+                </span>
+              </div>
+              <div class="rounded-lg p-3" style="background-color: #F5F5F0;">
+                <p class="text-xs" style="color: #6FA83E;">Has Insurance</p>
+                <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs"
+                  [style.backgroundColor]="detailCow.hasInsurance
+                    ? 'rgba(59,130,246,0.12)' : 'rgba(150,150,150,0.1)'"
+                  [style.color]="detailCow.hasInsurance ? '#3b82f6' : '#888'">
+                  {{ detailCow.hasInsurance ? 'Yes' : 'No' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Stats -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="rounded-xl p-3 text-center"
+              style="background-color: rgba(111,168,62,0.1); border: 1px solid rgba(111,168,62,0.3);">
+              <p class="text-xs" style="color: #6FA83E;">Total Milk</p>
+              <p class="text-xl font-bold mt-1" style="color: #6FA83E;">
+                {{ getTotalMilk() | number:'1.1-1' }} L
+              </p>
+            </div>
+            <div class="rounded-xl p-3 text-center"
+              style="background-color: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.2);">
+              <p class="text-xs" style="color: #ca8a04;">Total Revenue</p>
+              <p class="text-xl font-bold mt-1" style="color: #ca8a04;">
+                ₹{{ getTotalRevenue() | number:'1.0-0' }}
+              </p>
+            </div>
+            <div class="rounded-xl p-3 text-center"
+              style="background-color: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);">
+              <p class="text-xs" style="color: #ef4444;">Medical Cost</p>
+              <p class="text-xl font-bold mt-1" style="color: #ef4444;">
+                ₹{{ getTotalMedicalCost() | number:'1.0-0' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Milk Logs -->
+          <div class="rounded-xl overflow-hidden mb-4"
+            style="border: 1px solid rgba(111,168,62,0.3);">
+            <div class="px-4 py-2.5"
+              style="background-color: rgba(111,168,62,0.1); border-bottom: 1px solid rgba(111,168,62,0.3);">
+              <h4 class="text-sm font-semibold" style="color: #6FA83E;">
+                🥛 Milk Production ({{ detailMilkLogs.length }} logs)
+              </h4>
+            </div>
+            <div *ngIf="detailMilkLogs.length === 0"
+              class="text-center py-4 text-sm" style="color: #888;">No milk logs</div>
+            <div *ngIf="detailMilkLogs.length > 0" class="max-h-40 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead style="background-color: #F5F5F0;" class="sticky top-0">
+                  <tr>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Date</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Shift</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Qty (L)</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Fat %</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let log of detailMilkLogs"
+                    style="border-bottom: 1px solid rgba(111,168,62,0.1);">
+                    <td class="px-3 py-2 text-xs" style="color: #555;">{{ log.logDate }}</td>
+                    <td class="px-3 py-2">
+                      <span class="px-1.5 py-0.5 rounded-full text-xs"
+                        [style.backgroundColor]="log.shift === 'AM'
+                          ? 'rgba(234,179,8,0.12)' : 'rgba(59,130,246,0.12)'"
+                        [style.color]="log.shift === 'AM' ? '#ca8a04' : '#3b82f6'">
+                        {{ log.shift }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 text-xs font-medium" style="color: #212121;">{{ log.quantity }} L</td>
+                    <td class="px-3 py-2 text-xs" style="color: #555;">{{ log.qualityDegree ?? '-' }}</td>
+                    <td class="px-3 py-2 text-xs font-medium" style="color: #6FA83E;">
+                      {{ log.pricePerLiter ? '₹' + (log.quantity * log.pricePerLiter | number:'1.0-0') : '-' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Health Records -->
+          <div class="rounded-xl overflow-hidden mb-4"
+            style="border: 1px solid rgba(239,68,68,0.2);">
+            <div class="px-4 py-2.5"
+              style="background-color: rgba(239,68,68,0.06); border-bottom: 1px solid rgba(239,68,68,0.2);">
+              <h4 class="text-sm font-semibold" style="color: #ef4444;">
+                🏥 Health Records ({{ detailHealthRecords.length }} records)
+              </h4>
+            </div>
+            <div *ngIf="detailHealthRecords.length === 0"
+              class="text-center py-4 text-sm" style="color: #888;">No health records</div>
+            <div *ngIf="detailHealthRecords.length > 0" class="max-h-40 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead style="background-color: #F5F5F0;" class="sticky top-0">
+                  <tr>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Date</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Disease</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Pregnancy</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Medication</th>
+                    <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of detailHealthRecords"
+                    style="border-bottom: 1px solid rgba(111,168,62,0.1);">
+                    <td class="px-3 py-2 text-xs" style="color: #555;">{{ r.checkupDate }}</td>
+                    <td class="px-3 py-2 text-xs" style="color: #555;">{{ r.diseaseName || 'Routine' }}</td>
+                    <td class="px-3 py-2">
+                      <span *ngIf="r.pregnancyMonth"
+                        class="px-1.5 py-0.5 rounded-full text-xs"
+                        style="background-color: rgba(236,72,153,0.12); color: #ec4899;">
+                        Month {{ r.pregnancyMonth }}
+                      </span>
+                      <span *ngIf="!r.pregnancyMonth" class="text-xs" style="color: #888;">-</span>
+                    </td>
+                    <td class="px-3 py-2">
+                      <span class="px-1.5 py-0.5 rounded-full text-xs"
+                        [style.backgroundColor]="r.medicationGiven
+                          ? 'rgba(111,168,62,0.15)' : 'rgba(150,150,150,0.1)'"
+                        [style.color]="r.medicationGiven ? '#6FA83E' : '#888'">
+                        {{ r.medicationGiven ? 'Yes' : 'No' }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 text-xs font-medium" style="color: #ef4444;">
+                      {{ r.medicalCost ? '₹' + r.medicalCost : '-' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Calves -->
+          <div class="rounded-xl overflow-hidden"
+            style="border: 1px solid rgba(234,179,8,0.3);">
+            <div class="px-4 py-2.5"
+              style="background-color: rgba(234,179,8,0.06); border-bottom: 1px solid rgba(234,179,8,0.3);">
+              <h4 class="text-sm font-semibold" style="color: #ca8a04;">
+                🐄 Calves ({{ detailCalves.length }})
+              </h4>
+            </div>
+            <div *ngIf="detailCalves.length === 0"
+              class="text-center py-4 text-sm" style="color: #888;">No calves recorded</div>
+            <table *ngIf="detailCalves.length > 0" class="w-full text-sm">
+              <thead style="background-color: #F5F5F0;">
+                <tr>
+                  <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Name</th>
+                  <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Tag ID</th>
+                  <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Breed</th>
+                  <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Gender</th>
+                  <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Weight</th>
+                  <th class="text-left px-3 py-2 text-xs font-semibold" style="color: #6FA83E;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let calf of detailCalves"
+                  style="border-bottom: 1px solid rgba(111,168,62,0.1);">
+                  <td class="px-3 py-2 text-xs font-medium" style="color: #212121;">{{ calf.name || '-' }}</td>
+                  <td class="px-3 py-2 text-xs" style="color: #555;">{{ calf.tagId || '-' }}</td>
+                  <td class="px-3 py-2 text-xs" style="color: #555;">{{ calf.breed || '-' }}</td>
+                  <td class="px-3 py-2">
+                    <span class="px-1.5 py-0.5 rounded-full text-xs"
+                      [style.backgroundColor]="calf.gender === 'Male'
+                        ? 'rgba(59,130,246,0.12)' : 'rgba(236,72,153,0.12)'"
+                      [style.color]="calf.gender === 'Male' ? '#3b82f6' : '#ec4899'">
+                      {{ calf.gender || 'Female' }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-xs" style="color: #555;">
+                    {{ calf.weight ? calf.weight + ' kg' : '-' }}
+                  </td>
+                  <td class="px-3 py-2">
+                    <span class="px-1.5 py-0.5 rounded-full text-xs"
+                      [style.backgroundColor]="calf.status === 'Active'
+                        ? 'rgba(111,168,62,0.15)' : 'rgba(150,150,150,0.1)'"
+                      [style.color]="calf.status === 'Active' ? '#6FA83E' : '#888'">
+                      {{ calf.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Modal -->
+  <app-cow-form
+    *ngIf="showForm"
+    [cow]="selectedCow"
+    [cows]="allCows"
+    (saved)="onFormSaved()"
+    (closed)="onFormClosed()">
+  </app-cow-form>
+
+</div>

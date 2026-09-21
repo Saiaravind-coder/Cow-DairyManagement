@@ -1,0 +1,207 @@
+<div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
+  <div class="rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-screen overflow-y-auto"
+    style="background-color: white;">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+          style="background-color: rgba(111,168,62,0.15);">🐄</div>
+        <h3 class="text-lg font-bold" style="color: #212121;">
+          {{ cow ? 'Edit Cow' : 'Add New Cow' }}
+        </h3>
+      </div>
+      <button (click)="closed.emit()"
+        class="hover:opacity-70 text-xl" style="color: #888;">✕</button>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error"
+      class="text-sm rounded-lg px-4 py-3 mb-4"
+      style="background-color: rgba(239,68,68,0.08);
+             border: 1px solid rgba(239,68,68,0.3);
+             color: #ef4444;">
+      {{ error }}
+    </div>
+
+    <form (ngSubmit)="onSubmit()">
+
+      <!-- Image Upload -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-2" style="color: #212121;">
+          Cow Image (optional)
+        </label>
+        <div class="flex justify-center mb-3">
+          <div class="w-24 h-24 rounded-full overflow-hidden"
+            style="border: 2px solid #6FA83E;">
+            <img *ngIf="form.imageUrl" [src]="form.imageUrl"
+              alt="Cow preview" class="w-full h-full object-cover"/>
+            <div *ngIf="!form.imageUrl"
+              class="w-full h-full flex items-center justify-center text-4xl"
+              style="background-color: #F5F5F0;">🐄</div>
+          </div>
+        </div>
+        <input type="file" accept="image/*"
+          (change)="onImageSelected($event)"
+          class="w-full rounded-lg px-3 py-2 text-sm"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;"/>
+        <p class="text-xs mt-1" style="color: #888;">JPG, PNG — shown in cow details</p>
+      </div>
+
+      <!-- Name + Tag -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Name</label>
+          <input [(ngModel)]="form.name" name="name" type="text"
+            placeholder="e.g. Lakshmi"
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Tag ID</label>
+          <input [(ngModel)]="form.tagId" name="tagId" type="text"
+            placeholder="e.g. TAG-001"
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;"/>
+        </div>
+      </div>
+
+      <!-- Breed -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1" style="color: #212121;">Breed</label>
+        <select [(ngModel)]="form.breed" name="breed"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="">Select breed</option>
+          <option *ngFor="let b of breeds" [value]="b.en">{{ b.en }} — {{ b.ta }}</option>
+        </select>
+      </div>
+
+      <!-- Gender + DOB -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Gender</label>
+          <select [(ngModel)]="form.gender" name="gender"
+            (ngModelChange)="onGenderChange()"
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;">
+            <option value="">Select gender</option>
+            <option value="Female">Female 🐄</option>
+            <option value="Male">Male 🐂</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Date of Birth</label>
+          <input [(ngModel)]="form.dateOfBirth" name="dateOfBirth" type="date"
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;"/>
+        </div>
+      </div>
+
+      <!-- Mother Cow -->
+      <div class="mb-4" *ngIf="!isMale">
+        <label class="block text-sm font-medium mb-1" style="color: #212121;">
+          Mother Cow
+          <span class="text-xs ml-1" style="color: #888;">(Female cows only)</span>
+        </label>
+        <select [(ngModel)]="form.parentId" name="parentId"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option [ngValue]="null">None</option>
+          <option *ngFor="let c of availableParents" [ngValue]="c.id">
+            {{ c.name }} {{ c.tagId ? '(' + c.tagId + ')' : '' }}
+          </option>
+        </select>
+        <p *ngIf="availableParents.length === 0"
+          class="text-xs mt-1" style="color: #888;">No female cows available</p>
+      </div>
+
+      <!-- Male Notice -->
+      <div *ngIf="isMale" class="mb-4 rounded-lg px-4 py-3"
+        style="background-color: rgba(59,130,246,0.06);
+               border: 1px solid rgba(59,130,246,0.2);">
+        <p class="text-xs" style="color: #3b82f6;">
+          🐂 Male cows do not produce milk and cannot be assigned a mother in milk records.
+        </p>
+      </div>
+
+      <!-- Weight + Height -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Weight (kg)</label>
+          <input [(ngModel)]="form.weight" name="weight" type="number"
+            min="0" placeholder="e.g. 350"
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color: #212121;">Height (inch)</label>
+          <input [(ngModel)]="form.height" name="height" type="number"
+            min="0" placeholder="e.g. 52"
+            class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+            style="border: 1px solid rgba(111,168,62,0.4);
+                   background-color: #F5F5F0;
+                   color: #212121;"/>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1" style="color: #212121;">Status</label>
+        <select [(ngModel)]="form.status" name="status"
+          class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
+          style="border: 1px solid rgba(111,168,62,0.4);
+                 background-color: #F5F5F0;
+                 color: #212121;">
+          <option value="Active">Active</option>
+          <option value="Sold">Sold</option>
+        </select>
+      </div>
+
+      <!-- Checkboxes -->
+      <div class="flex gap-6 mb-6">
+        <label class="flex items-center gap-2 text-sm cursor-pointer" style="color: #212121;">
+          <input type="checkbox" [(ngModel)]="form.hasLoan" name="hasLoan"
+            class="w-4 h-4" style="accent-color: #6FA83E;"/>
+          Has Loan
+        </label>
+        <label class="flex items-center gap-2 text-sm cursor-pointer" style="color: #212121;">
+          <input type="checkbox" [(ngModel)]="form.hasInsurance" name="hasInsurance"
+            class="w-4 h-4" style="accent-color: #6FA83E;"/>
+          Has Insurance
+        </label>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3">
+        <button type="button" (click)="closed.emit()"
+          class="flex-1 py-2 rounded-lg text-sm hover:opacity-80"
+          style="border: 1px solid rgba(111,168,62,0.4); color: #6FA83E;">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="loading"
+          class="flex-1 text-white py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+          style="background-color: #6FA83E;">
+          {{ loading ? 'Saving...' : (cow ? 'Update Cow' : 'Add Cow') }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
